@@ -34,3 +34,37 @@ The goal of this project is to design an intelligent system that can:
 
 The system follows a **single-agent tool orchestration architecture**, where one controller manages multiple tools.
 
+This design corresponds to a **Level-1 Agentic AI system**.
+
+---
+
+## 🔧 Tools Used in the System
+
+### 1️⃣ Dataset Analysis Tool
+- Inspects dataset structure
+- Identifies numerical columns
+- Enables flexibility across different CSV formats
+
+### 2️⃣ Fund Scoring Tool
+- Applies deterministic financial logic
+- Uses metrics such as returns, risk, expense ratio, and ratings (if available)
+- Produces a ranked list of mutual funds
+
+### 3️⃣ Explanation Tool (LLM)
+- Uses a Large Language Model to explain results
+- Converts numerical insights into human-readable text
+- Does not influence ranking decisions
+
+---
+
+## 🚀 Technologies Used
+
+- **Python**
+- **Streamlit** – Web application framework
+- **Pandas** – Data handling and processing
+- **Groq API** – LLM inference
+- **LLaMA 3.1** – Natural language explanation
+
+---
+
+
