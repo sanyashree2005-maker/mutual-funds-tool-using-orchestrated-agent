@@ -1,10 +1,11 @@
 # ==========================================
 # Tool-Orchestrated Agentic AI
-# Mutual Fund Recommendation System
+# Mutual Fund Analyzer with Visualizations
 # ==========================================
 
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
 from groq import Groq
 
 # ------------------------------------------
@@ -17,8 +18,9 @@ st.set_page_config(
 
 st.title("🤖 Agentic AI – Mutual Fund Analyzer")
 st.write(
-    "This system uses a tool-orchestrated agent to analyze mutual fund data, "
-    "rank funds using deterministic logic, and explain results using an LLM."
+    "A tool-orchestrated agent that analyzes mutual fund datasets, "
+    "ranks funds using deterministic logic, visualizes insights, "
+    "and explains recommendations using an LLM."
 )
 
 st.markdown("---")
@@ -62,11 +64,11 @@ st.subheader("📄 Dataset Preview")
 st.dataframe(df.head(), use_container_width=True)
 
 # =====================================================
-# 🔧 TOOLS (Deterministic, Non-LLM)
+# 🔧 TOOLS (Deterministic)
 # =====================================================
 
 def analyze_dataset(df: pd.DataFrame):
-    """Tool 1: Dataset Inspection"""
+    """Tool 1: Dataset Analysis"""
     numeric_cols = df.select_dtypes(include="number").columns.tolist()
     return {
         "columns": df.columns.tolist(),
@@ -74,10 +76,8 @@ def analyze_dataset(df: pd.DataFrame):
     }
 
 def score_funds(df: pd.DataFrame, metadata: dict):
-    """Tool 2: Fund Scoring Logic"""
+    """Tool 2: Fund Scoring"""
     df = df.copy()
-
-    # Flexible scoring based on available columns
     score = 0
 
     if "returns" in metadata["numeric_columns"]:
@@ -95,13 +95,46 @@ def score_funds(df: pd.DataFrame, metadata: dict):
     df["score"] = score
     return df.sort_values("score", ascending=False)
 
+def visualize_funds(top_funds: pd.DataFrame):
+    """Tool 3: Graph-Based Visualization"""
+    st.subheader("📊 Visual Analysis of Top Funds")
+
+    numeric_cols = top_funds.select_dtypes(include="number").columns
+
+    # Score Comparison
+    if "score" in numeric_cols:
+        st.write("🔹 Score Comparison")
+        fig, ax = plt.subplots()
+        ax.bar(top_funds.index.astype(str), top_funds["score"])
+        ax.set_xlabel("Fund Index")
+        ax.set_ylabel("Score")
+        st.pyplot(fig)
+
+    # Return vs Risk
+    if "returns" in numeric_cols and "risk" in numeric_cols:
+        st.write("🔹 Return vs Risk")
+        fig, ax = plt.subplots()
+        ax.scatter(top_funds["risk"], top_funds["returns"])
+        ax.set_xlabel("Risk")
+        ax.set_ylabel("Returns")
+        st.pyplot(fig)
+
+    # Expense Ratio Comparison
+    if "expense_ratio" in numeric_cols:
+        st.write("🔹 Expense Ratio Comparison")
+        fig, ax = plt.subplots()
+        ax.bar(top_funds.index.astype(str), top_funds["expense_ratio"])
+        ax.set_xlabel("Fund Index")
+        ax.set_ylabel("Expense Ratio")
+        st.pyplot(fig)
+
 def explain_with_llm(top_funds: pd.DataFrame, user_query: str):
-    """Tool 3: LLM Explanation"""
+    """Tool 4: LLM Explanation"""
     snapshot = top_funds.to_string(index=False)
 
     system_prompt = """
 You are a financial explanation agent.
-Explain recommendations clearly and simply.
+Explain recommendations clearly.
 Do not hallucinate missing metrics.
 """
 
@@ -128,24 +161,15 @@ Explain:
     return response.choices[0].message.content
 
 # =====================================================
-# 🧠 ORCHESTRATOR (AGENT CONTROLLER)
+# 🧠 ORCHESTRATOR (Agent Controller)
 # =====================================================
 
 def orchestrator(df, user_query, top_k):
-    """
-    Orchestrates tool execution step-by-step
-    """
-
-    # Step 1: Dataset analysis
     metadata = analyze_dataset(df)
-
-    # Step 2: Fund scoring
     ranked_df = score_funds(df, metadata)
-
-    # Step 3: Select top funds
     top_funds = ranked_df.head(top_k)
 
-    # Step 4: Explanation
+    visualize_funds(top_funds)     # Visualization Tool
     explanation = explain_with_llm(top_funds, user_query)
 
     return top_funds, explanation
